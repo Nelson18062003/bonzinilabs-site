@@ -1,0 +1,1358 @@
+/* =============================================================================
+   BONZINILABS LTD — bonzinilabs.com
+   Static marketing site. No framework, no build step, no third-party request.
+
+   Every dimension comes from the project design system: an 8px spacing scale,
+   eight type roles (the seven editorial ones plus --fs-ui for controls), five
+   radii, and breakpoints at 480 / 640 / 768 / 900 / 1024. 900 is the point the
+   navigation collapses and is mirrored by matchMedia in main.js. Component
+   sizes fixed by other rules — the 44px tap target, the 26px pill, the 56/64px
+   bar — are the documented exceptions to the spacing scale.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   1. FONTS — self-hosted Inter Variable (latin subset, 48KB, one request)
+   The fallback face is metric-matched to Arial so swapping causes no reflow.
+   -------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-var-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  /* Arial is absent on Linux and Android, and local() matches on font name,
+     not on metrics — so the Arial metric clones have to be named explicitly
+     or the fallback never resolves and the swap shifts the layout. */
+  src: local("Arial"), local("Liberation Sans"), local("Arimo"),
+    local("Helvetica Neue"), local("Roboto");
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22.4%;
+  line-gap-override: 0%;
+}
+
+/* -----------------------------------------------------------------------------
+   2. TOKENS
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+  accent-color: #6e8bff;
+
+  /* Colour — contrast ratios verified against --bg (WCAG 2.2 AA)
+     text-1 18.26:1 · text-2 8.53:1 · text-3 6.20:1 · accent 6.45:1 */
+  --bg: #08090a;
+  --surface-1: #101113;
+  --surface-2: #17191c;
+  --border: #212428;
+  --border-strong: #2e3238;
+  --border-hover: #3a3f47;
+  /* Boundaries that are the only marker of an interactive control.
+     3.13:1 on --surface-2, 3.36:1 on --surface-1, 3.54:1 on --bg. */
+  --border-control: #606874;
+  --text-1: #f4f5f6;
+  --text-2: #a5aab2;
+  --text-3: #8a9099;
+  --accent: #6e8bff;
+  --accent-hover: #8da2ff;
+  --accent-subtle: color-mix(in oklab, var(--accent) 12%, var(--bg));
+  --on-accent: #08090a;
+
+  /* Form error state — the only non-neutral hues on the site besides the accent */
+  --danger-border: #4a2a2e;
+  --danger-bg: #1c1315;
+  --danger-text: #ff9ea4;
+
+  /* Spacing — 8px base; 20px is the single sanctioned 4px step */
+  --s-1: 0.25rem;   /*  4 */
+  --s-2: 0.5rem;    /*  8 */
+  --s-3: 0.75rem;   /* 12 */
+  --s-4: 1rem;      /* 16 */
+  --s-4h: 1.25rem;  /* 20 */
+  --s-5: 1.5rem;    /* 24 */
+  --s-6: 2rem;      /* 32 */
+  --s-7: 2.5rem;    /* 40 */
+  --s-8: 3rem;      /* 48 */
+  --s-9: 4rem;      /* 64 */
+  --s-10: 5rem;     /* 80 */
+
+  /* Type */
+  --font-sans: "Inter", "Inter Fallback", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --fs-display: clamp(2.5rem, 1.664rem + 3.429vw, 4.75rem);   /* 40 → 76 */
+  --fs-h2: clamp(1.875rem, 1.55rem + 1.333vw, 2.75rem);       /* 30 → 44 */
+  --fs-h3: clamp(1.25rem, 1.157rem + 0.381vw, 1.5rem);        /* 20 → 24 */
+  --fs-lead: clamp(1.0625rem, 0.993rem + 0.286vw, 1.25rem);   /* 17 → 20 */
+  --fs-body: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem);      /* 16 → 17 */
+  --fs-ui: 0.9375rem;                                          /* 15, controls */
+  --fs-small: 0.875rem;                                        /* 14 */
+  --fs-label: 0.75rem;                                         /* 12 */
+
+  /* Layout */
+  --container: 1200px;
+  --gutter: clamp(1.5rem, 0.94rem + 2.3vw, 2.5rem);           /* 24 → 40 */
+  --nav-h: 64px;
+  --section-pad: clamp(5rem, 3.143rem + 7.62vw, 10rem);       /* 80 → 160 */
+
+  /* Radius — the only five values on this site */
+  --r-1: 6px;
+  --r-2: 8px;
+  --r-3: 12px;
+  --r-4: 16px;
+  --r-pill: 999px;
+
+  /* Motion */
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 240ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-std: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (max-width: 767px) {
+  :root {
+    --nav-h: 56px;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   3. RESET & BASE
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--bg);
+  color: var(--text-2);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.65;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure,
+blockquote {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text-1);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-display);
+  font-weight: 560;
+  line-height: 1.04;
+  letter-spacing: -0.032em;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  font-weight: 560;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  font-weight: 560;
+  line-height: 1.35;
+  letter-spacing: -0.014em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color var(--dur-1) var(--ease-std);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+svg {
+  display: block;
+  flex: none;
+}
+
+address {
+  font-style: normal;
+}
+
+strong {
+  color: var(--text-1);
+  font-weight: 560;
+}
+
+/* Focus: the accent ring is the only reliable indicator — the 1px borders
+   sit at 1.28:1 and can never carry that job alone. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: var(--s-2);
+  inset-inline-start: var(--s-2);
+  z-index: 100;
+  padding: var(--s-3) var(--s-4h);
+  border-radius: var(--r-2);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  transform: translateY(calc(-100% - var(--s-4)));
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.skip-link:focus {
+  color: var(--on-accent);
+  transform: translateY(0);
+}
+
+/* -----------------------------------------------------------------------------
+   4. LAYOUT PRIMITIVES
+   -------------------------------------------------------------------------- */
+
+/* The icon sprite is markup, not content: it must occupy no space. */
+.icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  padding-block: var(--section-pad);
+  border-block-start: 1px solid var(--border);
+}
+
+.section[id],
+main > section[id] {
+  scroll-margin-block-start: calc(var(--nav-h) + var(--s-5));
+}
+
+/* Section header: label → h2 = 20px, h2 → intro = 24px, intro → content = 64px */
+.section-header {
+  max-width: 640px;
+  margin-block-end: var(--s-9);
+}
+
+.section-label {
+  display: block;
+  margin-block-end: var(--s-4h);
+  color: var(--accent);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-header p {
+  margin-block-start: var(--s-5);
+  max-width: 62ch;
+  font-size: var(--fs-lead);
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+}
+
+@media (max-width: 639px) {
+  .section-header {
+    margin-block-end: var(--s-8);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   5. COMPONENTS — buttons
+   One primary button, used twice on the page and nowhere else. Every other
+   action is a text link with an arrow.
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: 44px;
+  padding-inline: var(--s-4h);
+  border: 1px solid transparent;
+  border-radius: var(--r-2);
+  font-family: inherit;
+  font-size: var(--fs-ui);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-std),
+    border-color var(--dur-1) var(--ease-std),
+    color var(--dur-1) var(--ease-std);
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn--primary:hover {
+  background: var(--accent-hover);
+  color: var(--on-accent);
+}
+
+.btn--lg {
+  height: 48px;
+  padding-inline: var(--s-5);
+  font-size: 1rem;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* Text link with a travelling arrow — the third and last action style */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-1);
+  font-size: var(--fs-ui);
+  font-weight: 500;
+}
+
+.link-arrow svg {
+  width: 16px;
+  height: 16px;
+  transform: translateY(-0.5px);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.link-arrow:hover {
+  color: var(--accent-hover);
+}
+
+.link-arrow:hover svg {
+  transform: translate(3px, -0.5px);
+}
+
+/* Pill / badge */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 26px;
+  padding-inline: var(--s-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  color: var(--text-3);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.pill .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+}
+
+/* -----------------------------------------------------------------------------
+   6. HEADER / NAVIGATION — 64px desktop, 56px mobile
+   -------------------------------------------------------------------------- */
+
+.site-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 50;
+  border-block-end: 1px solid var(--border);
+  background: rgba(8, 9, 10, 0.82);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .site-header {
+    background: var(--bg);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .site-header {
+    background: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  height: var(--nav-h);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--text-1);
+  font-size: var(--fs-ui);
+  font-weight: 560;
+  letter-spacing: 0.02em;
+}
+
+.brand:hover {
+  color: var(--text-1);
+}
+
+.brand svg {
+  width: 22px;
+  height: 22px;
+}
+
+.brand-suffix {
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  margin-inline-start: auto;
+}
+
+.nav a {
+  color: var(--text-2);
+  font-size: var(--fs-ui);
+  font-weight: 400;
+}
+
+.nav a:hover {
+  color: var(--text-1);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+@media (max-width: 359px) {
+  .header-inner {
+    gap: var(--s-3);
+  }
+
+  .brand-suffix {
+    display: none;
+  }
+}
+
+/* Language switch — 34px control, hit area extended to 44px */
+.lang-switch {
+  display: inline-flex;
+  height: 40px;
+  padding: 4px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-2);
+  background: var(--surface-1);
+}
+
+.lang-switch button {
+  position: relative;
+  min-width: 34px;
+  padding-inline: var(--s-2);
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-std),
+    color var(--dur-1) var(--ease-std);
+}
+
+/* Vertical only: an inset on all four sides made each button's hit area
+   overlap its neighbour's, so the right edge of EN activated FR. */
+.lang-switch button::after {
+  content: "";
+  position: absolute;
+  inset-block: -6px;
+  inset-inline: 0;
+}
+
+.lang-switch button:hover {
+  color: var(--text-1);
+}
+
+.lang-switch button[aria-pressed="true"] {
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+/* Mobile menu button */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-2);
+  background: var(--surface-1);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.nav-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nav-toggle .icon-close {
+  display: none;
+}
+
+.nav-toggle[aria-expanded="true"] .icon-open {
+  display: none;
+}
+
+.nav-toggle[aria-expanded="true"] .icon-close {
+  display: block;
+}
+
+@media (max-width: 899px) {
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  .nav:not(.nav--inline) {
+    position: absolute;
+    inset-block-start: var(--nav-h);
+    inset-inline: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: var(--s-2) var(--gutter) var(--s-5);
+    border-block-end: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .nav[data-open="true"] {
+    display: flex;
+  }
+
+  .nav:not(.nav--inline) a {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    border-block-end: 1px solid var(--border);
+    color: var(--text-1);
+    font-size: 1rem;
+  }
+
+  .nav:not(.nav--inline) a:last-child {
+    border-block-end: 0;
+  }
+
+  /* Short link row on the policy pages: stays inline, wraps if it must. */
+  .nav--inline {
+    gap: var(--s-4);
+    flex-wrap: wrap;
+  }
+
+  .nav--inline a {
+    font-size: var(--fs-small);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   7. HERO — left-aligned, editorial. Alignment is left across the whole page.
+   -------------------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  padding-block: clamp(4rem, 2.4rem + 6.6vw, 7.5rem) var(--section-pad);
+  overflow: clip;
+}
+
+/* One restrained background element: a hairline grid, masked to a soft fade.
+   No radial glow, no gradient blob. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 72%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 72%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.hero > .container {
+  position: relative;
+}
+
+.hero h1 {
+  max-width: 17ch;
+  margin-block: var(--s-6) 0;
+}
+
+.hero h1 .muted {
+  color: var(--text-3);
+}
+
+.hero-lead {
+  max-width: 58ch;
+  margin-block-start: var(--s-5);
+  font-size: var(--fs-lead);
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-5);
+  margin-block-start: var(--s-8);
+}
+
+/* Proof strip — factual capability statements, no invented metrics */
+.hero-proof {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-5);
+  margin-block-start: var(--s-10);
+  padding-block-start: var(--s-5);
+  border-block-start: 1px solid var(--border);
+}
+
+.hero-proof li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  color: var(--text-3);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.hero-proof li::before {
+  content: "";
+  flex: none;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  transform: translateY(-3px);
+}
+
+@media (max-width: 899px) {
+  .hero-proof {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .hero-proof {
+    grid-template-columns: 1fr;
+    gap: var(--s-3);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   8. CARDS — 12px radius, 32px padding, 1px border, no shadow.
+   The hover budget is: border, 3% surface lift, -2px translate. Nothing else.
+   -------------------------------------------------------------------------- */
+
+/* Two columns, not four. The design system sets a 260px minimum for card
+   content; four across a 1200px container leaves 212px, so a 4-up row is
+   arithmetically out of bounds here and reads as four cramped columns. */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: stretch;
+  gap: var(--s-5);
+}
+
+@media (max-width: 639px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: var(--s-4);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  background: var(--surface-1);
+  transition: background-color var(--dur-2) var(--ease-std),
+    border-color var(--dur-2) var(--ease-std),
+    transform var(--dur-2) var(--ease-out);
+}
+
+.card:hover {
+  background: color-mix(in oklab, #fff 3%, var(--surface-1));
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 639px) {
+  .card {
+    padding: var(--s-5);
+  }
+}
+
+.card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-2);
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.card-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.card h3 {
+  margin-block-start: var(--s-4h);
+}
+
+.card p {
+  margin-block-start: var(--s-3);
+  color: var(--text-2);
+  font-size: var(--fs-body);
+}
+
+.card-list {
+  margin-block-start: var(--s-5);
+  padding-block-start: var(--s-5);
+  border-block-start: 1px solid var(--border);
+  display: grid;
+  gap: var(--s-3);
+}
+
+/* Three points in two columns leave an orphan on the second row, which is the
+   layout tell the design system warns about. One column, always. */
+
+/* French runs 15-20% longer than English and was stranding single words on a
+   last line; let the browser balance the rag instead of hand-tuning strings. */
+.card-list li,
+.data-list dd,
+.hero-proof li {
+  text-wrap: pretty;
+}
+
+.card-list li {
+  position: relative;
+  padding-inline-start: var(--s-5);
+  color: var(--text-3);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.card-list li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 7px;
+  width: 9px;
+  height: 5px;
+  border-inline-start: 1.5px solid var(--accent);
+  border-block-end: 1.5px solid var(--accent);
+  transform: rotate(-45deg);
+}
+
+/* -----------------------------------------------------------------------------
+   9. PROCESS — numerals, not icons: three steps read as a sequence, and a
+   numeral carries order better than a glyph.
+   -------------------------------------------------------------------------- */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-5);
+}
+
+@media (max-width: 767px) {
+  .steps {
+    grid-template-columns: 1fr;
+    gap: var(--s-8);
+  }
+}
+
+.step {
+  padding-block-start: var(--s-5);
+  border-block-start: 1px solid var(--border-strong);
+}
+
+.step-num {
+  display: block;
+  color: var(--accent);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.step h3 {
+  margin-block-start: var(--s-4);
+}
+
+.step p {
+  margin-block-start: var(--s-3);
+  max-width: 40ch;
+  font-size: var(--fs-body);
+}
+
+/* -----------------------------------------------------------------------------
+   10. SPLIT SECTIONS (about, pricing, contact)
+   -------------------------------------------------------------------------- */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(2.5rem, 1rem + 4vw, 5rem);
+  align-items: start;
+}
+
+/* Contact reverses the emphasis: the form is the working surface there. */
+.split--form {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+
+@media (max-width: 1023px) {
+  .split,
+  .split--form {
+    grid-template-columns: 1fr;
+    gap: var(--s-8);
+  }
+}
+
+.prose > * + * {
+  margin-block-start: var(--s-5);
+}
+
+.prose p {
+  max-width: 68ch;
+}
+
+.prose .lead {
+  color: var(--text-1);
+  font-size: var(--fs-lead);
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+}
+
+/* Panel — the elevated information block (company facts, billing summary) */
+.panel {
+  padding: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  background: var(--surface-1);
+}
+
+@media (max-width: 639px) {
+  .panel {
+    padding: var(--s-5);
+  }
+}
+
+.panel > h3 {
+  margin-block-end: var(--s-5);
+  padding-block-end: var(--s-4);
+  border-block-end: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.data-list {
+  display: grid;
+  gap: var(--s-5);
+  margin: 0;
+}
+
+.data-list dt {
+  margin-block-end: var(--s-1);
+  color: var(--text-3);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.data-list dd {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.data-list dd a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--accent);
+}
+
+/* -----------------------------------------------------------------------------
+   11. CONTACT
+   -------------------------------------------------------------------------- */
+
+.contact-info {
+  display: grid;
+  gap: var(--s-8);
+}
+
+.contact-block h3 {
+  margin-block-end: var(--s-3);
+  color: var(--text-3);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.contact-block p,
+.contact-block address {
+  color: var(--text-2);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+}
+
+/* The email must be visible plain text — Stripe's reviewers look for exactly
+   this, and a contact form alone does not satisfy them. */
+.email-link {
+  display: inline-block;
+  color: var(--text-1);
+  font-size: var(--fs-lead);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border-block-end: 1px solid var(--border-strong);
+  padding-block-end: 2px;
+  transition: border-color var(--dur-1) var(--ease-std),
+    color var(--dur-1) var(--ease-std);
+}
+
+.email-link:hover {
+  color: var(--accent-hover);
+  border-color: var(--accent);
+}
+
+/* Form — label above field (8px), field to field 20px, last field to submit 32px */
+.form {
+  padding: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  background: var(--surface-1);
+}
+
+@media (max-width: 639px) {
+  .form {
+    padding: var(--s-5);
+  }
+}
+
+.field + .field {
+  margin-block-start: var(--s-4h);
+}
+
+.field label {
+  display: block;
+  margin-block-end: var(--s-2);
+  color: var(--text-2);
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-2);
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: 1rem; /* 16px — prevents the iOS zoom-on-focus */
+  transition: border-color var(--dur-1) var(--ease-std);
+}
+
+.field input {
+  height: 44px;
+}
+
+.field textarea {
+  min-height: 120px;
+  padding-block: 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.field input:hover,
+.field textarea:hover {
+  border-color: var(--border-hover);
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+.form .btn {
+  margin-block-start: var(--s-6);
+}
+
+.form-note {
+  margin-block-start: var(--s-4);
+  color: var(--text-3);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.form-status {
+  margin-block-start: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-2);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.form-status[data-state="error"] {
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.form-status[data-state="ok"] {
+  border: 1px solid var(--border-strong);
+  background: var(--accent-subtle, #14161c);
+  color: var(--text-1);
+}
+
+.form-status[hidden] {
+  display: none;
+}
+
+/* -----------------------------------------------------------------------------
+   12. FOOTER
+   -------------------------------------------------------------------------- */
+
+.site-footer {
+  padding-block: var(--s-9) var(--s-8);
+  border-block-start: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  padding-block-end: var(--s-8);
+  border-block-end: 1px solid var(--border);
+}
+
+@media (max-width: 767px) {
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: var(--s-7);
+  }
+}
+
+.footer-brand svg {
+  width: 22px;
+  height: 22px;
+  color: var(--text-1);
+}
+
+.footer-name {
+  margin-block-start: var(--s-4);
+  color: var(--text-1);
+  font-size: var(--fs-ui);
+  font-weight: 560;
+  letter-spacing: 0.02em;
+}
+
+.footer-desc {
+  margin-block-start: var(--s-2);
+  max-width: 36ch;
+  color: var(--text-3);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.footer-col h2 {
+  margin-block-end: var(--s-4);
+  color: var(--text-3);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.footer-col ul {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.footer-col a {
+  color: var(--text-2);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+/* Footer links are list items, not prose: give them a 24px target (WCAG 2.2 AA) */
+.footer-col a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+.footer-col a:hover {
+  color: var(--text-1);
+}
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-block-start: var(--s-5);
+}
+
+.footer-legal p {
+  color: var(--text-3);
+  font-size: var(--fs-small);
+}
+
+/* -----------------------------------------------------------------------------
+   13. LEGAL / DOCUMENT PAGES
+   -------------------------------------------------------------------------- */
+
+.doc {
+  padding-block: clamp(3rem, 2rem + 4vw, 5rem) var(--section-pad);
+}
+
+.doc-header {
+  max-width: 720px;
+  padding-block-end: var(--s-8);
+  border-block-end: 1px solid var(--border);
+  margin-block-end: var(--s-8);
+}
+
+.doc-header .updated {
+  margin-block-start: var(--s-4);
+  color: var(--text-3);
+  font-size: var(--fs-small);
+}
+
+.doc-body {
+  max-width: 720px;
+}
+
+.doc-body h2 {
+  margin-block-start: var(--s-9);
+  font-size: var(--fs-h3);
+}
+
+.doc-body h2:first-child {
+  margin-block-start: 0;
+}
+
+.doc-body p,
+.doc-body ul {
+  margin-block-start: var(--s-4);
+  max-width: 68ch;
+}
+
+.doc-body ul {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.doc-body li {
+  position: relative;
+  padding-inline-start: var(--s-5);
+}
+
+.doc-body li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 2px;
+  inset-block-start: 11px;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+}
+
+.doc-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  gap: var(--s-2);
+  margin-block-end: var(--s-5);
+  color: var(--text-3);
+  font-size: var(--fs-small);
+}
+
+.doc-back:hover {
+  color: var(--text-1);
+}
+
+.doc-back svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* -----------------------------------------------------------------------------
+   14. MOTION
+   There is deliberately no scroll-reveal on this site: content that depends on
+   a script to become visible is content a crawler or a reviewer can miss.
+   Motion is limited to hover and focus feedback, which can never hide anything.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   15. PRINT — a reviewer printing the page must still get the legal block
+   -------------------------------------------------------------------------- */
+
+@media print {
+  :root {
+    --bg: #fff;
+    --text-1: #000;
+    --text-2: #222;
+    --text-3: #444;
+    --border: #ccc;
+    --border-strong: #999;
+    --surface-1: #fff;
+    --surface-2: #fff;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .site-header,
+  .nav,
+  .form,
+  .hero::before,
+  .skip-link {
+    display: none !important;
+  }
+
+  .section,
+  .hero {
+    padding-block: 24px;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+}

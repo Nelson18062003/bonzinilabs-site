@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="BONZINILABS">
+  <title>BONZINILABS</title>
+  <defs>
+    <linearGradient id="bzMarkGradient" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4D9DFF"/>
+      <stop offset="1" stop-color="#17E0C4"/>
+    </linearGradient>
+  </defs>
+  <path d="M4 3H13L16 6V9L13 12H17L20 15V18L17 21H4Z" stroke="url(#bzMarkGradient)"/>
+  <path d="M4 12H13" stroke="url(#bzMarkGradient)"/>
+  <circle cx="9.5" cy="7.5" r="1.25" fill="url(#bzMarkGradient)"/>
+  <circle cx="10.5" cy="16.5" r="1.25" fill="url(#bzMarkGradient)"/>
+</svg>

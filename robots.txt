@@ -1,0 +1,7 @@
+# BONZINILABS LTD — https://bonzinilabs.com
+# The site is fully public: every crawler and every reviewer may access it.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://bonzinilabs.com/sitemap.xml

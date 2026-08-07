@@ -1,0 +1,8 @@
+# Files that belong in the repository but not on the public site. Vercel never
+# uploads these, so they cannot be fetched from the company domain.
+README.md
+DEPLOY.md
+tools/
+netlify.toml
+assets/img/og-image.svg
+archive/

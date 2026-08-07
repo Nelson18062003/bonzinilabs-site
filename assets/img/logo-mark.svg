@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="BONZINILABS">
+  <title>BONZINILABS</title>
+  <path d="M4 3H13L16 6V9L13 12H17L20 15V18L17 21H4Z"/>
+  <path d="M4 12H13"/>
+  <circle cx="9.5" cy="7.5" r="1.25" fill="currentColor" stroke="none"/>
+  <circle cx="10.5" cy="16.5" r="1.25" fill="currentColor" stroke="none"/>
+</svg>
