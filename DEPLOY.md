@@ -109,32 +109,47 @@ Stripe l'écrit noir sur blanc : *« The webpage must be accessible without a pa
 
 ---
 
-## 6. Brancher le domaine `bonzinilabs.com`
+## 6. Brancher le sous-domaine `agency.bonzinilabs.com`
+
+Le domaine `bonzinilabs.com` a été **acheté directement chez Vercel** : Vercel gère déjà ses
+serveurs de noms. Il n'y a donc **aucun registrar externe à configurer** — tout se passe dans le
+tableau de bord Vercel, et le domaine racine peut continuer à servir un autre site : un
+sous-domaine est indépendant et gratuit.
 
 1. Projet → **Settings** → **Domains** → **Add Domain**.
-2. Tapez `bonzinilabs.com` et validez (acceptez l'ajout de `www`).
-3. Vercel affiche alors les valeurs DNS exactes. **Ce sont ces valeurs-là qui font foi** : elles
-   dépendent du projet et changent avec le temps. Recopiez-les telles quelles.
-   Valeurs habituellement documentées : enregistrement **A** vers `216.198.79.1` pour le domaine
-   nu (`76.76.21.21` sur les anciens projets), et **CNAME** pour `www` vers une cible propre au
-   projet du type `xxxxxxxx.vercel-dns-017.com`.
+2. Tapez `agency.bonzinilabs.com` et validez.
+3. C'est tout : le domaine étant géré par Vercel, l'enregistrement DNS et le certificat HTTPS
+   sont créés automatiquement, en général en une à deux minutes.
+4. Vérifiez que la ligne `agency.bonzinilabs.com` du cadre **Domains** affiche
+   **Valid Configuration**, puis ouvrez `https://agency.bonzinilabs.com` en navigation privée.
+5. Une fois le domaine actif, remplacez l'adresse `.vercel.app` par
+   `https://agency.bonzinilabs.com` dans Stripe.
 
-**Chez IONOS**, où le domaine est enregistré :
+### Recevoir le courrier sur `contact@bonzinilabs.com`
 
-1. Connectez-vous à `https://my.ionos.fr`.
-2. **Domaines & SSL** → cliquez sur `bonzinilabs.com` → onglet **DNS**.
-3. **AJOUTER UN ENREGISTREMENT** : type **A**, *Hostname* `@` (ou vide), *Points to* = l'IP
-   fournie par Vercel. Enregistrez.
-4. Encore : type **CNAME**, *Hostname* `www`, *Points to* = la cible fournie par Vercel.
-5. **Supprimez les anciens enregistrements A/CNAME** qui pointaient ailleurs, sinon conflit.
-6. Comptez de 15 minutes à quelques heures, puis attendez le cadenas HTTPS (certificat
-   automatique).
-7. Une fois le domaine actif, remplacez l'adresse `.vercel.app` par `https://bonzinilabs.com`
-   dans Stripe.
+Vercel vend des domaines mais **ne fournit aucun service e-mail** : sans configuration, un
+message envoyé à `contact@bonzinilabs.com` **rebondit**. C'est une cause de refus invisible,
+pour Stripe comme pour la vérification d'entreprise Meta (qui envoie son code à une adresse
+sur le domaine — une adresse Gmail est refusée).
 
-Pensez aussi aux enregistrements **MX** pour recevoir le courrier sur `contact@bonzinilabs.com` :
-un domaine d'entreprise incapable de recevoir un e-mail est un signal négatif pour un
-examinateur.
+Redirection gratuite via ImprovMX :
+
+1. Créez un compte sur `https://improvmx.com` (plan gratuit) et ajoutez le domaine
+   `bonzinilabs.com`.
+2. Configurez la redirection `contact@bonzinilabs.com` → votre boîte personnelle.
+3. Dans Vercel : tableau de bord → **Domains** → `bonzinilabs.com` → **DNS Records** →
+   ajoutez les enregistrements **MX** (et le **TXT** SPF) indiqués par ImprovMX. Vercel propose
+   des **DNS Presets** qui préremplissent ces valeurs pour les services courants.
+4. Testez : envoyez un e-mail depuis une autre adresse et **vérifiez qu'il arrive**.
+
+### Vérification du domaine chez Meta
+
+Dans le Business Manager, vérifiez le **domaine racine** `bonzinilabs.com` (sans `www` ni
+`https://`) : cette vérification couvre automatiquement tous les sous-domaines, dont
+`agency.bonzinilabs.com`. Méthode la plus simple : Meta fournit un enregistrement **TXT** à
+ajouter dans Vercel → **Domains** → `bonzinilabs.com` → **DNS Records**. Pour la vérification
+d'entreprise, donnez l'adresse `contact@bonzinilabs.com` (le domaine racine correspond au site,
+c'est la configuration attendue).
 
 ---
 
@@ -187,7 +202,7 @@ Rien de tout cela n'est inventé dans le code — un numéro fictif serait pire 
 | Numéro d'immatriculation (company number) | `index.html`, bloc « Company details » (un commentaire marque l'endroit exact) et pied de page des quatre pages | Obligatoire sur le site d'une société britannique (Companies Act 2006), et c'est le champ qui permet à Stripe de rapprocher le site de l'entité déclarée |
 | Numéro de téléphone | section Contact | Stripe demande « something besides contact forms » et cite le téléphone |
 | Numéro de TVA | pied de page | Uniquement si la société est assujettie |
-| Boîte `contact@bonzinilabs.com` opérationnelle | chez votre hébergeur mail | Une adresse qui rebondit fait échouer la vérification sans explication |
+| Boîte `contact@bonzinilabs.com` opérationnelle | redirection ImprovMX + enregistrements MX dans les DNS Vercel (section 6) | Une adresse qui rebondit fait échouer la vérification sans explication |
 
 Pour changer l'adresse e-mail partout d'un coup :
 
